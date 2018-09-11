@@ -2,21 +2,25 @@ import graphics
 from graphics import *
 import random
 
+# transition tables for precipitation
 precip_transitions = [ ["NN", "NL", "NH"], ["LN", "LL", "LH"], ["HN", "HL", "HH"] ]
 precip_transition_matrix = [ [.7, .2, .1], [.4, .4, .2], [.4, .3, .3] ]
 
+# transition tables for temperatures, which vary depending on the month
 temp_transitions = [ ["HH", "HM", "HC"], ["MH", "MM", "MC"], ["CH", "CM", "CC"] ]
 sept_transition_matrix = [ [.5, .4, .1], [.4, .5, .1], [.5, .3, .2] ]
 oct_transition_matrix = [ [.4, .4, .2], [.3, .5, .2], [.3, .5, .2] ]
 nov_transition_matrix = [ [.3, .3, .4], [.2, .3, .5], [.1, .3, .6] ]
 dec_transition_matrix = [ [.2, .2, .6], [.1, .2, .7], [.1, .1, .8] ]
 
+# the starting states
 rain_state = "none"
 temp_state = "hot"
 
 outside_count = 0
 prev_outside_count = 0
 
+# draws the initial text and lines for the graphic
 def draw_text(win) :
     
     format_month_text(win, "sept", 80)
@@ -37,6 +41,7 @@ def draw_text(win) :
     
     return
 
+# draws the text of each month
 def format_month_text(win, month, y) :
     
     month = Text(Point(25, y), month)
@@ -47,6 +52,7 @@ def format_month_text(win, month, y) :
     
     return
 
+# draws the days in the graph
 def format_day_text(win) :
     
     day10 = Text(Point(240, 45), "10")
@@ -67,6 +73,7 @@ def format_day_text(win) :
     
     return
 
+# draws the key
 def format_key(win, y) :
     
     temp = Text(Point(668.5, y+4), "temp")
@@ -103,8 +110,10 @@ def draw(win) :
     # for september
     for i in range(0, 30) :
         
+        # draw whether weather is good or not based on curr state
         draw_outside(win, temp, rain, sept_x, sept_y)        
     
+        
         temp = draw_temp(win, "September", sept_x)
             
         rain = draw_precip(win, "September", sept_x)
@@ -144,8 +153,10 @@ def draw(win) :
         
         dec_x += 20           
 
+    # current count is number of good days minus those in previous models
     outside_count -= prev_outside_count
     
+    # write in the new number of good days
     white_out = Rectangle(Point(0,0), Point(300,30))
     white_out.setFill("beige")
     white_out.setOutline("beige")
@@ -165,6 +176,7 @@ def draw_outside(win, temp, rain, month_x, month_y) :
     
     outside = Circle(Point(month_x+10, month_y), 10)
     
+    # it's a good day if warm and no or light rain or if temperate and no rain
     if (temp == "hot" and rain == "none") :
         outside.setFill(color_rgb(0, 150, 0))
         outside_count += 1
@@ -177,6 +189,7 @@ def draw_outside(win, temp, rain, month_x, month_y) :
         outside.setFill(color_rgb(0, 150, 0))
         outside_count += 1
         
+    # otherwise it is a bad day
     else :
         outside.setFill("white")
     
@@ -189,6 +202,7 @@ def draw_temp(win, month, month_x) :
     
     transitions = temp_transitions
     
+    # pick out which transition matrix you're using based on which month it is
     if month == "September" :
         temp = Circle(Point((month_x+10),60), 10)
         transition_matrix = sept_transition_matrix    
@@ -204,9 +218,13 @@ def draw_temp(win, month, month_x) :
     elif month == "December" :
         temp = Circle(Point((month_x+10),270), 10) 
         transition_matrix = dec_transition_matrix
-        
+    
+    # get a transition from the transition matrix, choose the color for the state,
+    # and change the current state
     if temp_state == "hot" :
         temp.setFill(color_rgb(255, 50, 0))
+        
+        # get which transition
         transition = calc_transition(0, transition_matrix, transitions) 
         
         if (transition == "HH") :
@@ -244,15 +262,18 @@ def draw_temp(win, month, month_x) :
         if (transition == "CC") :
             temp_state = "cold"        
     
+    # draw and return the state  
     temp.draw(win)
         
     return temp_state    
 
 def draw_precip(win, month, month_x) :
     global rain_state
+    
     transition_matrix = precip_transition_matrix
     transitions = precip_transitions
     
+    # set the position of the circle based on the month
     if month == "September" :
         precip = Circle(Point((month_x+10),80), 10)
         
@@ -265,11 +286,13 @@ def draw_precip(win, month, month_x) :
     elif month == "December" :
         precip = Circle(Point((month_x+10),290), 10)
     
-    # if no current rain, chances are avg for month
+    # get a transition from the transition matrix, choose the color for the state,
+    # and change the current state 
     if rain_state == "none" :
         
         precip.setFill(color_rgb(255,255,255))
-        # get random transition
+        
+        # get which transition
         transition = calc_transition(0, transition_matrix, transitions)
         
         if (transition == "NN") :
@@ -309,6 +332,7 @@ def draw_precip(win, month, month_x) :
         if (transition == "HH") :
             rain_state = "heavy"
         
+    # draw and return the current state
     precip.draw(win)
 
     return rain_state
@@ -317,6 +341,7 @@ def calc_transition(state, transition_matrix, transitions) :
     
     random_num = random.randint(1,10)
 
+    # choose a transition based on the probability from the transition matrix
     if (random_num <= 10*transition_matrix[state][0]) :
         transition = transitions[state][0]
         
@@ -330,9 +355,11 @@ def calc_transition(state, transition_matrix, transitions) :
     
 def main():
     
+    # set up graphics window
     win = GraphWin('window', 710, 350)   
     win.setBackground("beige")
 
+    # draw predictions until mouse click
     exit = 1;
     while(exit) :
         
@@ -344,5 +371,6 @@ def main():
 
     win.close()
     
-main()
+    return
     
+main()
